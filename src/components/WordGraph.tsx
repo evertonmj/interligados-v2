@@ -1,17 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-} from '@xyflow/react';
+// ...existing code...
 import type { GameState } from '../types';
-import { WordFlowNode, type WordFlowNodeType } from './WordFlowNode';
 import { D3WordGraph } from './D3WordGraph';
 
 interface WordGraphProps {
   gameState: GameState;
 }
 
-const nodeTypes = {
-  wordNode: WordFlowNode,
-};
+// ...existing code...
 
 export function WordGraph({ gameState }: WordGraphProps) {
   return (

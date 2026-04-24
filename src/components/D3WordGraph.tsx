@@ -6,15 +6,40 @@ interface D3WordGraphProps {
   gameState: GameState;
 }
 
+
 export function D3WordGraph({ gameState }: D3WordGraphProps) {
   const ref = useRef<SVGSVGElement | null>(null);
+  // Armazena o último transform do zoom
+  const lastTransform = useRef<d3.ZoomTransform | null>(null);
+
 
   useEffect(() => {
     if (!ref.current) return;
+
     const svg = d3.select(ref.current);
     svg.selectAll('*').remove();
 
+    // Grupo para aplicar zoom/pan
+    const g = svg.append('g');
+
+    // Zoom behavior
+    const zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.2, 3])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+        lastTransform.current = event.transform;
+      });
+
+    svg.call(zoomBehavior);
+
+    // Se já existe um transform salvo, aplica ao grupo
+    if (lastTransform.current) {
+      g.attr('transform', lastTransform.current.toString());
+      svg.call(zoomBehavior.transform, lastTransform.current);
+    }
+
     // Prepare nodes and links for D3
+
     const nodes = gameState.visibleNodes.map((id) => {
       const node = gameState.nodes[id];
       let display = node?.word ?? id;
@@ -25,10 +50,16 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
         if (letters.length > 2) {
           display = letters.map((c, i) => {
             if (i === 0 || i === letters.length - 1) return c;
+            // Mostra letra se ela foi revelada por dica
+            if (node.hintedLetterIndexes && node.hintedLetterIndexes.includes(i)) return c;
             return /\p{L}/u.test(c) ? '*' : c;
           }).join('') + ` (${letterCount})`;
         } else {
-          display = node.word + ` (${letterCount})`;
+          // Para palavras curtas, mostra letras reveladas por dica
+          display = letters.map((c, i) => {
+            if (node.hintedLetterIndexes && node.hintedLetterIndexes.includes(i)) return c;
+            return /\p{L}/u.test(c) ? '*' : c;
+          }).join('') + ` (${letterCount})`;
         }
       } else if (node) {
         const letterCount = Array.from(node.word).filter((c) => /\p{L}/u.test(c)).length;
@@ -63,7 +94,8 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
       .force('charge', d3.forceManyBody().strength(-320))
       .force('center', d3.forceCenter(width / 2, height / 2));
 
-    const link = svg.append('g')
+
+    const link = g.append('g')
       .attr('stroke', '#bbb')
       .attr('stroke-width', 1.8)
       .selectAll('line')
@@ -73,7 +105,8 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
 
 
     // Draw nodes (smaller)
-    const node = svg.append('g')
+
+    const node = g.append('g')
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .selectAll('circle')
@@ -99,7 +132,8 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
       );
 
     // Draw masked/letter-count label inside node
-    const maskedLabel = svg.append('g')
+
+    const maskedLabel = g.append('g')
       .selectAll('text')
       .data(nodes)
       .join('text')
@@ -133,15 +167,15 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
   return (
     <div
       style={{
-        width: 600,
-        height: 600,
+        width: 1024,
+        height: 1024,
         // background: `url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=800&q=80') center/cover no-repeat, #0a1124`,
         borderRadius: 24,
         overflow: 'hidden',
         position: 'relative',
       }}
     >
-      <svg ref={ref} width={600} height={600} style={{ position: 'absolute', top: 0, left: 0 }} />
+      <svg ref={ref} width={1024} height={1024} style={{ position: 'absolute', top: 0, left: 0 }} />
     </div>
   );
 }

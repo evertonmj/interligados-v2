@@ -106,6 +106,22 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
 
     // Draw nodes (smaller)
 
+    const dragHandler = d3.drag<Element, any>()
+      .on('start', function (event: any, d: any) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on('drag', function (event: any, d: any) {
+        d.fx = event.x;
+        d.fy = event.y;
+      })
+      .on('end', function (event: any, d: any) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      });
+
     const node = g.append('g')
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
@@ -114,23 +130,7 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
       .join('circle')
       .attr('r', 18)
       .attr('fill', (d) => d.revealed ? 'rgba(59, 130, 246, 0.35)' : '#dbeafe')
-      .call(
-        (d3.drag() as any)
-          .on('start', function (event: any, d: any) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-          })
-          .on('drag', function (event: any, d: any) {
-            d.fx = event.x;
-            d.fy = event.y;
-          })
-          .on('end', function (event: any, d: any) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-          })
-      );
+      .call(dragHandler as any);
 
     // Draw masked/letter-count label inside node
 

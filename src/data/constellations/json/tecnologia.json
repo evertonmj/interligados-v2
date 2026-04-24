@@ -32,6 +32,7 @@
     { "word": "Nuvem", "connections": ["Armazenamento", "Dados", "Servidor", "Internet"] },
     { "word": "Backup", "connections": ["Armazenamento", "Banco de Dados", "Segurança", "Nuvem"] },
     { "word": "Banco de Dados", "connections": ["Armazenamento", "Dados", "Backup", "Servidor"] },
+    { "word": "Fonte", "connections": ["Energia", "Hardware", "Computador", "Circuito"] },
     { "word": "Internet", "connections": ["Rede", "Servidor", "Nuvem", "Protocolo"] },
     { "word": "Servidor", "connections": ["Rede", "Internet", "Hardware", "Banco de Dados"] },
     { "word": "Protocolo", "connections": ["Rede", "Internet", "Lógica", "Criptografia"] },

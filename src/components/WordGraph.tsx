@@ -1,9 +1,10 @@
 // ...existing code...
-import type { GameState } from '../types';
+
 import { D3WordGraph } from './D3WordGraph';
 
+
 interface WordGraphProps {
-  gameState: GameState;
+  gameState: any;
 }
 
 // ...existing code...

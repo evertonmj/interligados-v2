@@ -69,15 +69,15 @@ describe('useGame', () => {
     act(() => {
       api.startGame('a b', 2, undefined);
     });
-    // Gasta uma dica enquanto o node 'a' ainda não está revelado
+    // Gasta uma dica enquanto o node 'a b' ainda não está revelado
     act(() => {
       api.revealHintLetter();
     });
-    const node = api.state.nodes['a'];
+    const node = Object.values(api.state.nodes).find(n => n.word === 'a b');
     expect(node).toBeDefined();
-    const indexes = node.hintedLetterIndexes;
+    const indexes = node!.hintedLetterIndexes;
     expect(indexes.length).toBe(1);
-    const letter = Array.from(node.word)[indexes[0]];
+    const letter = Array.from(node!.word)[indexes[0]];
     expect(letter).not.toBe(' ');
   });
 });

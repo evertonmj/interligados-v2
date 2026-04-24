@@ -36,6 +36,8 @@
     { "word": "Rocha", "connections": ["Mineral", "Montanha", "Solo", "Tempo"] },
     { "word": "Nascentes", "connections": ["Rio", "Montanha", "Água", "Vapor"] },
     { "word": "Vapor", "connections": ["Nuvem", "Água", "Calor", "Ciclo da Água"] },
+    { "word": "Calor", "connections": ["Vapor"] },
+    { "word": "Energia", "connections": ["Cadeia Alimentar"] },
     { "word": "Vento", "connections": ["Nuvem", "Clima", "Semente", "Temperatura"] },
     { "word": "Luz Solar", "connections": ["Fotossíntese", "Clorofila", "Temperatura", "Vida"] },
     { "word": "Planta", "connections": ["Clorofila", "Semente", "Flor", "Vida"] },

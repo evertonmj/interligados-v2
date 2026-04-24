@@ -107,6 +107,7 @@ export function useGame() {
       let newlyRevealedNodeId: string | null = null;
 
       // Find if guess matches any VISIBLE but UNREVEALED node
+
       for (const nodeId of prev.visibleNodes) {
         const node = newState.nodes[nodeId];
         if (!node.revealed && normalizeWord(node.word) === normalizedGuess) {
@@ -143,7 +144,8 @@ export function useGame() {
       return {
         ...newState,
         visibleNodes: Array.from(newVisibleNodes),
-        status: newStatus
+        status: newStatus,
+        hintsRemaining: 11, // Resetar dicas a cada palavra revelada
       };
     });
 
@@ -158,13 +160,15 @@ export function useGame() {
         return prev;
       }
 
+
       const candidateNodes = prev.visibleNodes
         .map(nodeId => prev.nodes[nodeId])
         .filter((node): node is WordNode => Boolean(node && !node.revealed))
         .map((node) => {
           const availableIndexes = Array.from(node.word)
             .map((char, index) => ({ char, index }))
-            .filter(({ char, index }) => /\p{L}/u.test(char) && !node.hintedLetterIndexes.includes(index))
+            // Só conta letras, não espaços em branco
+            .filter(({ char, index }) => /\p{L}/u.test(char) && char !== ' ' && !node.hintedLetterIndexes.includes(index))
             .map(({ index }) => index);
 
           return { node, availableIndexes };

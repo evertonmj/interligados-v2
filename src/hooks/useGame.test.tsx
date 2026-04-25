@@ -42,23 +42,20 @@ describe('useGame', () => {
     expect(state.status).toBe('setup');
   });
 
-  it('resets hints when a word is revealed', () => {
+  it('resets hints when a word is revealed', async () => {
     let api;
     render(<TestComponent action={a => { api = a; }} />);
-    // Inicia o jogo
-    act(() => {
-      api.startGame('casa', 2, undefined);
+    // Inicia o jogo e aguarda
+    await act(async () => {
+      await api.startGame('casa', 2, undefined);
     });
     // Gasta dicas antes de revelar qualquer node
-    act(() => {
-      api.revealHintLetter();
-      api.revealHintLetter();
-    });
-    expect(api.state.hintsRemaining).toBeLessThan(11);
+    await act(async () => { api.revealHintLetter(); });
+    await act(async () => { api.revealHintLetter(); });
+    const hintsAfter = api.state.hintsRemaining;
+    expect(hintsAfter).toBe(9);
     // Agora revela um node (carro)
-    act(() => {
-      api.guessWord('carro');
-    });
+    await act(async () => { api.guessWord('carro'); });
     expect(api.state.hintsRemaining).toBe(11);
   });
 

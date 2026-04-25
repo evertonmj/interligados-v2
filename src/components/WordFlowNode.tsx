@@ -37,7 +37,7 @@ function WordFlowNodeComponent({ data }: NodeProps<WordFlowNodeType>) {
         isConnectable={false}
         className="!h-2 !w-2 !border-0 !bg-transparent !opacity-0"
       />
-      <span className="block whitespace-nowrap">{data.label}</span>
+      <span className="block whitespace-nowrap font-bold">{data.label}</span>
       <Handle
         type="source"
         position={Position.Right}

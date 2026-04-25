@@ -68,9 +68,6 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
     // Cria grupos para links, nós e labels, garantindo ordem correta
     if (!gRef.current) {
       const g = svg.append('g');
-      const linkGroup = g.append('g').attr('data-group', 'links');
-      const nodeGroup = g.append('g').attr('data-group', 'nodes');
-      const labelGroup = g.append('g').attr('data-group', 'labels');
       gRef.current = g.node();
     }
     const d3g = d3.select(gRef.current!);

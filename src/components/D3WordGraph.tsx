@@ -9,38 +9,13 @@ interface D3WordGraphProps {
 
 export function D3WordGraph({ gameState }: D3WordGraphProps) {
   const ref = useRef<SVGSVGElement | null>(null);
-  // Armazena o último transform do zoom
+  const gRef = useRef<SVGGElement | null>(null);
+  const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
   const lastTransform = useRef<d3.ZoomTransform | null>(null);
 
-
-  useEffect(() => {
-    if (!ref.current) return;
-
-    const svg = d3.select(ref.current);
-    svg.selectAll('*').remove();
-
-    // Grupo para aplicar zoom/pan
-    const g = svg.append('g');
-
-    // Zoom behavior
-    const zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.2, 3])
-      .on('zoom', (event) => {
-        g.attr('transform', event.transform);
-        lastTransform.current = event.transform;
-      });
-
-    svg.call(zoomBehavior);
-
-    // Se já existe um transform salvo, aplica ao grupo
-    if (lastTransform.current) {
-      g.attr('transform', lastTransform.current.toString());
-      svg.call(zoomBehavior.transform, lastTransform.current);
-    }
-
-    // Prepare nodes and links for D3
-
-    const nodes = gameState.visibleNodes.map((id) => {
+  // Função para formatar nodes
+  function getNodes() {
+    return gameState.visibleNodes.map((id) => {
       const node = gameState.nodes[id];
       let display = node?.word ?? id;
       let original = node?.word ?? id;
@@ -50,12 +25,10 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
         if (letters.length > 2) {
           display = letters.map((c, i) => {
             if (i === 0 || i === letters.length - 1) return c;
-            // Mostra letra se ela foi revelada por dica
             if (node.hintedLetterIndexes && node.hintedLetterIndexes.includes(i)) return c;
             return /\p{L}/u.test(c) ? '*' : c;
           }).join('') + ` (${letterCount})`;
         } else {
-          // Para palavras curtas, mostra letras reveladas por dica
           display = letters.map((c, i) => {
             if (node.hintedLetterIndexes && node.hintedLetterIndexes.includes(i)) return c;
             return /\p{L}/u.test(c) ? '*' : c;
@@ -72,95 +45,134 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
         original,
       };
     });
-    const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
+  }
+
+  function getLinks(nodes: any[]) {
+    const nodeMap = Object.fromEntries(nodes.map((n: any) => [n.id, n]));
     const links: { source: string; target: string }[] = [];
-    nodes.forEach((node) => {
-      (gameState.nodes[node.id]?.connections || []).forEach((connId) => {
+    nodes.forEach((node: any) => {
+      (gameState.nodes[node.id]?.connections || []).forEach((connId: string) => {
         if (nodeMap[connId]) {
-          // Avoid duplicate links
           if (!links.find((l) => (l.source === connId && l.target === node.id) || (l.source === node.id && l.target === connId))) {
             links.push({ source: node.id, target: connId });
           }
         }
       });
     });
+    return links;
+  }
 
-    const width = 600;
-    const height = 600;
-    svg.attr('viewBox', `0 0 ${width} ${height}`);
+  useEffect(() => {
+    if (!ref.current) return;
+    const svg = d3.select(ref.current);
+    if (!gRef.current) {
+      const selection = svg.append('g');
+      const gNode = selection.node();
+      if (gNode) {
+        gRef.current = gNode;
+      }
+    }
+    const d3g = d3.select(gRef.current!);
 
-    const simulation = d3.forceSimulation(nodes as any)
-      .force('link', d3.forceLink(links).id((d: any) => d.id).distance(90))
-      .force('charge', d3.forceManyBody().strength(-320))
-      .force('center', d3.forceCenter(width / 2, height / 2));
-
-
-    const link = g.append('g')
-      .attr('stroke', '#bbb')
-      .attr('stroke-width', 1.8)
-      .selectAll('line')
-      .data(links)
-      .join('line');
-
-
-
-    // Draw nodes (smaller)
-
-    const dragHandler = d3.drag<Element, any>()
-      .on('start', function (event: any, d: any) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-      })
-      .on('drag', function (event: any, d: any) {
-        d.fx = event.x;
-        d.fy = event.y;
-      })
-      .on('end', function (event: any, d: any) {
-        if (!event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+    // Zoom
+    const zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.2, 3])
+      .on('zoom', (event) => {
+        d3g.attr('transform', event.transform);
+        lastTransform.current = event.transform;
       });
+    svg.call(zoomBehavior);
+    if (lastTransform.current) {
+      d3g.attr('transform', lastTransform.current.toString());
+      svg.call(zoomBehavior.transform, lastTransform.current);
+    }
 
-    const node = g.append('g')
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 2)
-      .selectAll('circle')
-      .data(nodes)
-      .join('circle')
-      .attr('r', 18)
-      .attr('fill', (d) => d.revealed ? 'rgba(59, 130, 246, 0.35)' : '#dbeafe')
-      .call(dragHandler as any);
+    // Inicializa simulação apenas uma vez
+    if (!simulationRef.current) {
+      simulationRef.current = d3.forceSimulation()
+        .force('link', d3.forceLink().id((d: any) => d.id).distance(90))
+        .force('charge', d3.forceManyBody().strength(-320))
+        .force('center', d3.forceCenter(600 / 2, 600 / 2));
+    }
+    const simulation = simulationRef.current;
 
-    // Draw masked/letter-count label inside node
+    // Atualiza nodes e links
+    const nodes = getNodes();
+    const links = getLinks(nodes);
+    simulation.nodes(nodes as any);
+    (simulation.force('link') as d3.ForceLink<any, any>).links(links);
 
-    const maskedLabel = g.append('g')
-      .selectAll('text')
-      .data(nodes)
-      .join('text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', '.35em')
-      .attr('font-size', 11)
-      .attr('pointer-events', 'none')
-      .text((d) => d.word);
+    // JOIN links
+    const linkSel = d3g.selectAll<SVGLineElement, any>('line')
+      .data(links, (d: any) => `${d.source}-${d.target}`);
+    linkSel.join(
+      enter => enter.append('line').attr('stroke', '#bbb').attr('stroke-width', 1.8),
+      update => update,
+      exit => exit.remove()
+    );
 
-    // Do not draw any label below the node
+    // JOIN nodes
+    const nodeSel = d3g.selectAll<SVGCircleElement, any>('circle')
+      .data(nodes, (d: any) => d.id);
+    nodeSel.join(
+      enter => enter.append('circle')
+        .attr('r', 18)
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 2)
+        .attr('fill', (d) => d.revealed ? 'rgba(59, 130, 246, 0.35)' : '#dbeafe')
+        .call(d3.drag<Element, any>()
+          .on('start', function (event: any, d: any) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on('drag', function (event: any, d: any) {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on('end', function (event: any, d: any) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+          }) as any),
+      update => update
+        .attr('fill', (d) => d.revealed ? 'rgba(59, 130, 246, 0.35)' : '#dbeafe'),
+      exit => exit.remove()
+    );
+
+    // JOIN labels
+    const labelSel = d3g.selectAll<SVGTextElement, any>('text')
+      .data(nodes, (d: any) => d.id);
+    labelSel.join(
+      enter => enter.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('dy', '.35em')
+        .attr('font-size', 11)
+        .attr('pointer-events', 'none')
+        .attr('font-weight', 'bold')
+        .text((d) => d.word),
+      update => update.text((d) => d.word),
+      exit => exit.remove()
+    );
 
     simulation.on('tick', () => {
-      link
+      d3g.selectAll<SVGLineElement, any>('line')
         .attr('x1', (d: any) => d.source.x)
         .attr('y1', (d: any) => d.source.y)
         .attr('x2', (d: any) => d.target.x)
         .attr('y2', (d: any) => d.target.y);
-      node
+      d3g.selectAll<SVGCircleElement, any>('circle')
         .attr('cx', (d: any) => d.x)
         .attr('cy', (d: any) => d.y);
-      maskedLabel
+      d3g.selectAll<SVGTextElement, any>('text')
         .attr('x', (d: any) => d.x)
         .attr('y', (d: any) => d.y);
     });
 
+    simulation.alpha(1).restart();
+
     return () => {
+      // Não remove o SVG, só para a simulação
       simulation.stop();
     };
   }, [gameState]);
@@ -170,7 +182,6 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
       style={{
         width: 1024,
         height: 1024,
-        // background: `url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=800&q=80') center/cover no-repeat, #0a1124`,
         borderRadius: 24,
         overflow: 'hidden',
         position: 'relative',

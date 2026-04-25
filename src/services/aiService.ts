@@ -52,7 +52,7 @@ async function generateGeminiGraph(
   const prompt = PROMPT_TEMPLATE(seedWord, maxRelations);
 
   try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

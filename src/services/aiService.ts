@@ -98,57 +98,14 @@ async function generateGeminiGraph(
   }
 }
 
-/**
- * Modo Ollama: Usa modelo local via Ollama
- */
-async function generateOllamaGraph(
-  seedWord: string,
-  maxRelations: number,
-  ollamaUrl: string,
-  ollamaModel: string
-): Promise<GraphDataResponse> {
-  const prompt = PROMPT_TEMPLATE(seedWord, maxRelations);
 
-  try {
-    const response = await fetch(`${ollamaUrl}/api/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: ollamaModel,
-        prompt: prompt,
-        stream: false,
-        temperature: 0.7,
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erro Ollama: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const text = data.response || '';
-
-    // Extrai JSON da resposta
-    const startIndex = text.indexOf('{');
-    const endIndex = text.lastIndexOf('}');
-
-    if (startIndex === -1 || endIndex === -1) {
-      throw new Error("Ollama não retornou um formato JSON válido.");
-    }
-
-    const jsonString = text.substring(startIndex, endIndex + 1);
-    return JSON.parse(jsonString) as GraphDataResponse;
-
-  } catch (error: any) {
-    console.error("Erro ao gerar grafo com Ollama:", error);
-    throw new Error(error.message || "Falha ao conectar com Ollama. Certifique-se que está rodando em " + ollamaUrl);
-  }
-}
 
 /**
- * Função principal que roteia para o modo correto
+ * Função principal para gerar o grafo de palavras.
+ * 
+ * Modos disponíveis:
+ * - offline: usa constelações pré-construídas (não depende de internet)
+ * - gemini: usa a API do Google Gemini (necessita chave de API)
  */
 export async function generateWordGraph(
   seedWord: string,
@@ -157,22 +114,13 @@ export async function generateWordGraph(
 ): Promise<GraphDataResponse> {
   const mode = config?.mode || 'offline';
 
-  switch (mode) {
-    case 'offline':
-      return generateOfflineGraph(seedWord);
-
-    case 'gemini':
-      if (!config?.geminiKey) {
-        throw new Error("API Key do Gemini é obrigatória para o modo Gemini.");
-      }
-      return generateGeminiGraph(seedWord, maxRelations, config.geminiKey);
-
-    case 'ollama':
-      const ollamaUrl = config?.ollamaUrl || 'http://localhost:11434';
-      const ollamaModel = config?.ollamaModel || 'mistral';
-      return generateOllamaGraph(seedWord, maxRelations, ollamaUrl, ollamaModel);
-
-    default:
-      return generateOfflineGraph(seedWord);
+  if (mode === 'gemini') {
+    if (!config?.geminiKey) {
+      throw new Error("API Key do Gemini é obrigatória para o modo Gemini.");
+    }
+    return generateGeminiGraph(seedWord, maxRelations, config.geminiKey);
   }
+
+  // Default e modo offline
+  return generateOfflineGraph(seedWord);
 }

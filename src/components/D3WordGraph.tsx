@@ -65,14 +65,18 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
   useEffect(() => {
     if (!ref.current) return;
     const svg = d3.select(ref.current);
+    // Cria grupos para links, nós e labels, garantindo ordem correta
     if (!gRef.current) {
-      const selection = svg.append('g');
-      const gNode = selection.node();
-      if (gNode) {
-        gRef.current = gNode;
-      }
+      const g = svg.append('g');
+      const linkGroup = g.append('g').attr('data-group', 'links');
+      const nodeGroup = g.append('g').attr('data-group', 'nodes');
+      const labelGroup = g.append('g').attr('data-group', 'labels');
+      gRef.current = g.node();
     }
     const d3g = d3.select(gRef.current!);
+    const linkGroup = d3g.select('g[data-group="links"]');
+    const nodeGroup = d3g.select('g[data-group="nodes"]');
+    const labelGroup = d3g.select('g[data-group="labels"]');
 
     // Zoom
     const zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
@@ -102,8 +106,8 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
     simulation.nodes(nodes as any);
     (simulation.force('link') as d3.ForceLink<any, any>).links(links);
 
-    // JOIN links
-    const linkSel = d3g.selectAll<SVGLineElement, any>('line')
+    // JOIN links (sempre atrás)
+    const linkSel = linkGroup.selectAll<SVGLineElement, any>('line')
       .data(links, (d: any) => `${d.source}-${d.target}`);
     linkSel.join(
       enter => enter.append('line').attr('stroke', '#bbb').attr('stroke-width', 1.8),
@@ -111,15 +115,15 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
       exit => exit.remove()
     );
 
-    // JOIN nodes
-    const nodeSel = d3g.selectAll<SVGCircleElement, any>('circle')
+    // JOIN nodes (círculos)
+    const nodeSel = nodeGroup.selectAll<SVGCircleElement, any>('circle')
       .data(nodes, (d: any) => d.id);
     nodeSel.join(
       enter => enter.append('circle')
         .attr('r', 18)
         .attr('stroke', '#fff')
         .attr('stroke-width', 2)
-        .attr('fill', (d) => d.revealed ? 'rgba(59, 130, 246, 0.35)' : '#dbeafe')
+        .attr('fill', (d) => d.revealed ? 'rgba(59, 130, 246, 0.7)' : '#dbeafe')
         .call(d3.drag<Element, any>()
           .on('start', function (event: any, d: any) {
             if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -136,35 +140,52 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
             d.fy = null;
           }) as any),
       update => update
-        .attr('fill', (d) => d.revealed ? 'rgba(59, 130, 246, 0.35)' : '#dbeafe'),
+        .attr('fill', (d) => d.revealed ? 'rgb(59, 180, 246, 0.9)' : '#dbeafe'),
       exit => exit.remove()
     );
 
-    // JOIN labels
-    const labelSel = d3g.selectAll<SVGTextElement, any>('text')
+    // JOIN labels (palavras) - destaque visual
+    const labelSel = labelGroup.selectAll<SVGTextElement, any>('text')
       .data(nodes, (d: any) => d.id);
     labelSel.join(
       enter => enter.append('text')
         .attr('text-anchor', 'middle')
         .attr('dy', '.35em')
-        .attr('font-size', 11)
+        .attr('font-size', 16)
+        .attr('font-weight', 500)
+        .attr('font-family', 'Montserrat, Arial, sans-serif')
+        .attr('fill', '#1e293b') // slate-800
+        .attr('stroke', 'none')
+        .attr('stroke-width', 0)
+        .attr('paint-order', null)
         .attr('pointer-events', 'none')
-        .attr('font-weight', 'bold')
+        .style('filter', 'drop-shadow(0 1px 2px #0003)')
+        .style('opacity', 1)
         .text((d) => d.word),
-      update => update.text((d) => d.word),
+      update => update
+        .attr('font-size', 16)
+        .attr('font-weight', 500)
+        .attr('font-family', 'Montserrat, Arial, sans-serif')
+        .attr('fill', '#1e293b')
+        .attr('stroke', 'none')
+        .attr('stroke-width', 0)
+        .attr('paint-order', null)
+        .style('filter', 'drop-shadow(0 1px 2px #0003)')
+        .style('opacity', 1)
+        .text((d) => d.word),
       exit => exit.remove()
     );
 
     simulation.on('tick', () => {
-      d3g.selectAll<SVGLineElement, any>('line')
+      linkGroup.selectAll<SVGLineElement, any>('line')
         .attr('x1', (d: any) => d.source.x)
         .attr('y1', (d: any) => d.source.y)
         .attr('x2', (d: any) => d.target.x)
         .attr('y2', (d: any) => d.target.y);
-      d3g.selectAll<SVGCircleElement, any>('circle')
+      nodeGroup.selectAll<SVGCircleElement, any>('circle')
         .attr('cx', (d: any) => d.x)
         .attr('cy', (d: any) => d.y);
-      d3g.selectAll<SVGTextElement, any>('text')
+      labelGroup.selectAll<SVGTextElement, any>('text')
         .attr('x', (d: any) => d.x)
         .attr('y', (d: any) => d.y);
     });
@@ -190,7 +211,7 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'white',
+        background: '#e2e8f0', // slate-200 (off-white mais escuro)
       }}
     >
       <svg ref={ref} width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }} />

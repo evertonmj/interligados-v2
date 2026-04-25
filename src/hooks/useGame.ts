@@ -165,11 +165,18 @@ export function useGame() {
         .map(nodeId => prev.nodes[nodeId])
         .filter((node): node is WordNode => Boolean(node && !node.revealed))
         .map((node) => {
-          const availableIndexes = Array.from(node.word)
+          // Conta apenas letras (não espaço/hífen)
+          const allLetterIndexes = Array.from(node.word)
             .map((char, index) => ({ char, index }))
-            // Só conta letras, não espaços em branco nem hífen
-            .filter(({ char, index }) => /\p{L}/u.test(char) && char !== ' ' && char !== '-' && !node.hintedLetterIndexes.includes(index))
+            .filter(({ char }) => /\p{L}/u.test(char) && char !== ' ' && char !== '-')
             .map(({ index }) => index);
+
+          const availableIndexes = allLetterIndexes.filter(index => !node.hintedLetterIndexes.includes(index));
+
+          // Se só falta uma letra, não permitir dica
+          if (availableIndexes.length <= 1) {
+            return { node, availableIndexes: [] };
+          }
 
           return { node, availableIndexes };
         })

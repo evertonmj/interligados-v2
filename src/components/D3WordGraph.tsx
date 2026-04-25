@@ -180,14 +180,20 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
   return (
     <div
       style={{
-        width: 1024,
-        height: 1024,
+        width: '100%',
+        height: '100%',
+        minHeight: 600,
+        minWidth: 600,
         borderRadius: 24,
         overflow: 'hidden',
         position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'white',
       }}
     >
-      <svg ref={ref} width={1024} height={1024} style={{ position: 'absolute', top: 0, left: 0 }} />
+      <svg ref={ref} width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }} />
     </div>
   );
 }

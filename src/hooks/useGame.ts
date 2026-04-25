@@ -167,8 +167,8 @@ export function useGame() {
         .map((node) => {
           const availableIndexes = Array.from(node.word)
             .map((char, index) => ({ char, index }))
-            // Só conta letras, não espaços em branco
-            .filter(({ char, index }) => /\p{L}/u.test(char) && char !== ' ' && !node.hintedLetterIndexes.includes(index))
+            // Só conta letras, não espaços em branco nem hífen
+            .filter(({ char, index }) => /\p{L}/u.test(char) && char !== ' ' && char !== '-' && !node.hintedLetterIndexes.includes(index))
             .map(({ index }) => index);
 
           return { node, availableIndexes };

@@ -120,10 +120,10 @@ export function GameScreen({ state, progress, onGuess, onUseHint, onRestart }: G
       </header>
 
       {/* Main Game Area */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-8">
-        <div className="max-w-6xl mx-auto">
+      <main className="flex-1 overflow-y-auto p-0 md:p-0">
+        <div className="max-w-full mx-auto h-full flex flex-col justify-center items-center">
           {isWon && (
-            <div className="mb-8 p-6 bg-green-50 border border-green-200 rounded-2xl flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-500">
+            <div className="mb-4 p-6 bg-green-50 border border-green-200 rounded-2xl flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-500 z-20">
               <Trophy className="text-green-500 w-16 h-16 mb-4" />
               <h2 className="text-2xl font-bold text-green-800 mb-2">Parabéns!</h2>
               <p className="text-green-600">Você descobriu todas as {progress.total} palavras conectadas a "{state.seedWord}".</p>
@@ -136,8 +136,8 @@ export function GameScreen({ state, progress, onGuess, onUseHint, onRestart }: G
             </div>
           )}
 
-          {/* Word Board (Graph) */}
-          <div className="py-4 w-full h-[72vh] md:h-[80vh]">
+          {/* Word Board (Graph) - maximize area */}
+          <div className="w-full h-[calc(100vh-180px)] md:h-[calc(100vh-180px)] flex items-center justify-center">
             <WordGraph gameState={state} />
           </div>
         </div>

@@ -66,9 +66,19 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
     if (!ref.current) return;
     const svg = d3.select(ref.current);
     // Cria grupos para links, nós e labels, garantindo ordem correta
+    // Garante que os grupos de links, nós e labels existem SEMPRE
     if (!gRef.current) {
       const g = svg.append('g');
+      g.append('g').attr('data-group', 'links');
+      g.append('g').attr('data-group', 'nodes');
+      g.append('g').attr('data-group', 'labels');
       gRef.current = g.node();
+    } else {
+      // Se já existe, garanta que os grupos existem (hot reload, etc)
+      const d3g = d3.select(gRef.current);
+      if (d3g.select('g[data-group="links"]').empty()) d3g.append('g').attr('data-group', 'links');
+      if (d3g.select('g[data-group="nodes"]').empty()) d3g.append('g').attr('data-group', 'nodes');
+      if (d3g.select('g[data-group="labels"]').empty()) d3g.append('g').attr('data-group', 'labels');
     }
     const d3g = d3.select(gRef.current!);
     const linkGroup = d3g.select('g[data-group="links"]');
@@ -91,7 +101,7 @@ export function D3WordGraph({ gameState }: D3WordGraphProps) {
     // Inicializa simulação apenas uma vez
     if (!simulationRef.current) {
       simulationRef.current = d3.forceSimulation()
-        .force('link', d3.forceLink().id((d: any) => d.id).distance(90))
+        .force('link', d3.forceLink().id((d: any) => d.id).distance(160))
         .force('charge', d3.forceManyBody().strength(-320))
         .force('center', d3.forceCenter(600 / 2, 600 / 2));
     }

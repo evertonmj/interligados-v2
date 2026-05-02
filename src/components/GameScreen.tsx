@@ -18,9 +18,21 @@ export function GameScreen({ state, progress, onGuess, onUseHint, onRestart }: G
   const [hintPulse, setHintPulse] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Focus input on load
   useEffect(() => {
-    // Focus input on load
     inputRef.current?.focus();
+  }, []);
+
+  // Keyboard shortcut: Ctrl+K (Windows/Linux) or Cmd+K (Mac) to focus input
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -76,17 +88,45 @@ export function GameScreen({ state, progress, onGuess, onUseHint, onRestart }: G
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-             <div className="flex items-center gap-2 font-bold text-xl text-primary">
-               <Network size={22} className="text-primary" />
-               <span>Interligado AI</span>
-             </div>
-             <div className="hidden sm:block px-3 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-600">
-               Semente: <span className="font-bold text-slate-800">{state.seedWord}</span>
-             </div>
+        <div className="max-w-6xl mx-auto px-4 h-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2">
+          <div className="flex items-center gap-3 min-w-[180px] mb-2 sm:mb-0">
+            <div className="flex items-center gap-2 font-bold text-xl text-primary h-full">
+              <Network size={22} className="text-primary" />
+              <span>Interligado AI</span>
+            </div>
+            <div className="hidden sm:flex px-3 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-600 h-full items-center">
+              Semente: <span className="font-bold text-slate-800">{state.seedWord}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
+          {/* Responsive input field in header, reduced height and aligned, stacked on mobile */}
+          <div className="flex-1 min-w-[120px] max-w-md mx-2 w-full h-full flex items-center mb-2 sm:mb-0">
+            <form onSubmit={handleSubmit} className="relative flex items-center w-full h-full">
+              <input
+                ref={inputRef}
+                type="text"
+                value={guess}
+                onChange={(e) => handleGuessChange(e.target.value)}
+                disabled={isWon}
+                placeholder={isWon ? "Jogo finalizado!" : "Digite uma palavra..."}
+                className={cn(
+                  "w-full pl-7 pr-6 py-2 text-base bg-slate-50 border-2 rounded-2xl outline-none transition-all h-10",
+                  isWrong ? "border-red-400 bg-red-50 animate-shake text-red-900" : "border-slate-200 focus:border-primary focus:bg-white",
+                  isWon && "opacity-50 cursor-not-allowed"
+                )}
+                aria-label="Palavra para adivinhar"
+                style={{ minHeight: 0 }}
+              />
+              <button
+                type="submit"
+                disabled={isWon || !guess.trim()}
+                className="absolute right-2 p-2 text-white bg-primary hover:bg-primary-dark rounded-xl transition-colors disabled:opacity-50 h-8 w-8 flex items-center justify-center"
+              >
+                <Send size={18} />
+              </button>
+            </form>
+            <div className="text-xs text-slate-400 mt-1 hidden sm:block ml-2">Atalho: <kbd className="px-1 py-0.5 bg-slate-200 rounded">{navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}</kbd>+K para focar</div>
+          </div>
+          <div className="flex items-center gap-4 min-w-[200px] justify-end h-full">
             <button
               onClick={handleUseHint}
               disabled={isWon || state.hintsRemaining <= 0}
@@ -145,30 +185,7 @@ export function GameScreen({ state, progress, onGuess, onUseHint, onRestart }: G
 
       {/* Input Area */}
       <footer className="bg-white border-t border-slate-200 p-4 sticky bottom-0">
-        <div className="max-w-xl mx-auto">
-          <form onSubmit={handleSubmit} className="relative flex items-center">
-            <input
-              ref={inputRef}
-              type="text"
-              value={guess}
-              onChange={(e) => handleGuessChange(e.target.value)}
-              disabled={isWon}
-              placeholder={isWon ? "Jogo finalizado!" : "Digite uma palavra..."}
-              className={cn(
-                "w-full pl-6 pr-14 py-4 text-lg bg-slate-50 border-2 rounded-2xl outline-none transition-all",
-                isWrong ? "border-red-400 bg-red-50 animate-shake text-red-900" : "border-slate-200 focus:border-primary focus:bg-white",
-                isWon && "opacity-50 cursor-not-allowed"
-              )}
-            />
-            <button
-              type="submit"
-              disabled={isWon || !guess.trim()}
-              className="absolute right-2 p-3 text-white bg-primary hover:bg-primary-dark rounded-xl transition-colors disabled:opacity-50"
-            >
-              <Send size={20} />
-            </button>
-          </form>
-        </div>
+        
       </footer>
     </div>
   );

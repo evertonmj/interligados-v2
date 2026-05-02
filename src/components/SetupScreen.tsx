@@ -85,13 +85,17 @@ export function SetupScreen({ onStart, isLoading, error }: SetupScreenProps) {
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-6 md:px-6 md:py-8">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-6 flex items-center gap-3 text-white">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
-            <Network size={22} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Interligado Livre</h1>
-            <p className="text-sm text-slate-300">Escolha um tema para começar.</p>
+        {/* Header with input between Seed label and tips */}
+        <div className="mb-6 flex flex-col gap-2 text-white">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
+              <Network size={22} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Interligado Livre</h1>
+              <p className="text-sm text-slate-300">Escolha um tema para começar.</p>
+            </div>
+            {/* Tips (dicas) could be here if needed, but not present in header in SetupScreen */}
           </div>
         </div>
 
@@ -145,25 +149,12 @@ export function SetupScreen({ onStart, isLoading, error }: SetupScreenProps) {
               ))}
             </div>
 
-            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <label htmlFor="seedWord" className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Tema selecionado
-              </label>
-              <input
-                type="text"
-                id="seedWord"
-                required
-                value={seedWord}
-                onChange={(e) => setSeedWord(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Digite um tema ou escolha um card acima"
-              />
-              {selectedTheme && (
-                <div className="mt-2 text-xs text-slate-500">
-                  {selectedTheme.description}
-                </div>
-              )}
-            </div>
+            {/* Removed input from here, now only show selected theme description if available */}
+            {selectedTheme && (
+              <div className="mt-4 text-xs text-slate-500">
+                {selectedTheme.description}
+              </div>
+            )}
           </section>
 
           <details className="rounded-2xl border border-slate-800 bg-slate-900 text-slate-100">
